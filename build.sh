@@ -1,0 +1,1 @@
+go build -o builds/linux/musicplayer ./cmd/musicplayer
