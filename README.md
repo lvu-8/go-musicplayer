@@ -2,7 +2,7 @@
 
 # MusicPlayer
 
-**MusicPlayer** is a simple CLI audio player written in Go for Linux. It supports mp3 playback, pause/resume, seeking, and a progress bar.
+It is a simple CLI audio player written in Go. It supports mp3 playback, pause/resume, seeking, and a progress bar.
 
 ## Purpose
 - Play music from the terminal

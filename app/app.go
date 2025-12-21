@@ -23,10 +23,19 @@ func NewMusicCLIApp(format beep.Format, streamer beep.StreamSeekCloser) *MusicAp
 	}
 }
 
-func (app *MusicApp) Init() {
-	app.player.Init()
-	app.cli.Init()
+func (app *MusicApp) Init() error {
+	if err := app.player.Init(); err != nil {
+		return err
+	}
+
+	if err := app.cli.Init(); err != nil {
+		return err
+	}
+
+	return nil
 }
+
+// wg sync.WaitGroup
 
 func (app *MusicApp) Run() {
 	ctx, cancel := context.WithCancel(context.Background())

@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"player/player"
 	"strings"
@@ -13,27 +12,30 @@ import (
 )
 
 const (
+	PROGRESS_BAR_SPACE = iota + 1
+	BUTTONS_SPACE
+	MESSAGE_SPACE
+	ENDING_LINE
+
 	PROGRESS_BAR_SIZE = 40
 
-	QUITE    = 'q'
+	QUIT     = 'q'
 	PAUSED   = 'p'
 	FORWARD  = 'x'
 	BACKWARD = 'z'
 
-	PROGRESS_BAR_SPACE = 1
-	BUTTONS_SPACE      = 2
-	MESSAGE_SPACE      = 3
-	ENDING_LINE        = 4
+	QUITE_MESSAGE   = "- Quitting... -"
+	PAUSED_MESSAGE  = "- Paused -"
+	PLAYING_MESSAGE = "- Playing -"
 
-	SPACES          = "       "
-	QUITE_MESSAGE   = "- Quitting... -" + SPACES
-	PAUSED_MESSAGE  = "- Paused -" + SPACES
-	PLAYING_MESSAGE = "- Playing -" + SPACES
+	HIDE_CURSOR = "\033[?25l"
+	SHOW_CURSOR = "\033[?25h"
+	CLEAR_LINE  = "\033[2K\r "
 )
 
-var BUTTONS_MASSAGE = fmt.Sprintf(
+var BUTTONS_MESSAGE = fmt.Sprintf(
 	"[%c] Quit, [%c] Pause/Resume [%c] Forward, [%c] Backward",
-	QUITE, PAUSED, FORWARD, BACKWARD,
+	QUIT, PAUSED, FORWARD, BACKWARD,
 )
 
 const tickerSize = 100 * time.Millisecond
@@ -50,20 +52,23 @@ func New(player player.Player) *CLI {
 	}
 }
 
-func (c *CLI) Init() {
-	var err error
+func (c *CLI) Init() error {
+	var err error = nil
 
 	c.oldState, err = term.MakeRaw(int(os.Stdin.Fd()))
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	fmt.Print(HIDE_CURSOR)
+	return err
 }
 
 func (c *CLI) Destroy() {
+	fmt.Print(SHOW_CURSOR)
+
 	fmt.Print(strings.Repeat("\n", ENDING_LINE-1) + "\r")
 
-	term.Restore(int(os.Stdin.Fd()), c.oldState)
+	if c.oldState != nil {
+        term.Restore(int(os.Stdin.Fd()), c.oldState)
+    }
 }
 
 func (c *CLI) EventLoop(ctx context.Context, cancel context.CancelFunc) {
@@ -74,10 +79,7 @@ func (c *CLI) EventLoop(ctx context.Context, cancel context.CancelFunc) {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := os.Stdin.Read(buffer)
-			if err != nil {
-				log.Fatal(err)
-			}
+			os.Stdin.Read(buffer)
 		}
 	}
 
@@ -85,7 +87,7 @@ func (c *CLI) EventLoop(ctx context.Context, cancel context.CancelFunc) {
 }
 
 func (c *CLI) printIntoLine(message string, n int) {
-	s := strings.Repeat("\n", n-1) + "\r " +
+	s := strings.Repeat("\n", n-1) + CLEAR_LINE +
 		message +
 		strings.Repeat("\033[A", n)
 
@@ -94,7 +96,7 @@ func (c *CLI) printIntoLine(message string, n int) {
 
 func (c *CLI) processEvent(buffer []byte) bool {
 	switch buffer[0] {
-	case QUITE:
+	case QUIT:
 		c.printIntoLine(QUITE_MESSAGE, MESSAGE_SPACE)
 		return false
 	case PAUSED:
@@ -117,7 +119,7 @@ func (c *CLI) Loop(ctx context.Context) {
 	ticker := time.NewTicker(tickerSize)
 	defer ticker.Stop()
 
-	c.printIntoLine(BUTTONS_MASSAGE, BUTTONS_SPACE)
+	c.printIntoLine(BUTTONS_MESSAGE, BUTTONS_SPACE)
 	c.printIntoLine(PLAYING_MESSAGE, MESSAGE_SPACE)
 
 	for {
@@ -132,6 +134,10 @@ func (c *CLI) Loop(ctx context.Context) {
 }
 
 func (c *CLI) printProgressBar(position float64, length float64) {
+	if length <= 0 {
+		length = 1
+	}
+
 	played := int(position / length * PROGRESS_BAR_SIZE)
 	inverse := PROGRESS_BAR_SIZE - played
 
@@ -139,6 +145,6 @@ func (c *CLI) printProgressBar(position float64, length float64) {
 		strings.Repeat("#", played) + strings.Repeat(" ", inverse) +
 		"]"
 
-	s := fmt.Sprintf("%s %.1f/%.1f sec", bar, position*0.001, length*0.001)
-	c.printIntoLine(s, PROGRESS_BAR_SPACE)
+	status := fmt.Sprintf("%s %.1fs/%.1fs", bar, position*0.001, length*0.001)
+	c.printIntoLine(status, PROGRESS_BAR_SPACE)
 }

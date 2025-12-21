@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"player/app"
 
@@ -10,56 +9,48 @@ import (
 	"github.com/faiface/beep/mp3"
 )
 
-func openMusic(path string) *os.File {
+func openAndDecode(path string) (beep.StreamSeekCloser, beep.Format, *os.File, error) {
 	f, err := os.Open(path)
-
 	if err != nil {
-		log.Fatal(err)
+		return nil, beep.Format{}, nil, fmt.Errorf("failed opening file: %v", err)
 	}
 
-	return f
-}
-
-func decodeMusic(f *os.File) (streamer beep.StreamSeekCloser, format beep.Format) {
 	streamer, format, err := mp3.Decode(f)
-
 	if err != nil {
-		log.Fatal(err)
+		f.Close()
+		return nil, beep.Format{}, nil, fmt.Errorf("failed decoding mp3: %v", err)
 	}
 
-	return streamer, format
+	return streamer, format, f, nil
 }
 
-func playFile(path string) {
-	f := openMusic(path)
-	defer f.Close()
+func playFile(path string) error {
+	streamer, format, file, err := openAndDecode(path)
+	if err != nil {
+		return err
+	}
 
-	streamer, format := decodeMusic(f)
-
+	defer file.Close()
 	defer streamer.Close()
 
 	a := app.NewMusicCLIApp(format, streamer)
-	a.Init()
+	if err := a.Init(); err != nil {
+		return err
+	}
 	defer a.Destroy()
 
 	a.Run()
-}
-
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+	return nil
 }
 
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: musicplayer <path-to-mp3-file>")
-		return
+		os.Exit(1)
 	}
 
-	if !fileExists(os.Args[1]) {
-		fmt.Printf("File not found: %s\n", os.Args[1])
-		return
+	if err := playFile(os.Args[1]); err != nil {
+		fmt.Printf("Error playing file: %v\n", err)
+		os.Exit(1)
 	}
-
-	playFile(os.Args[1])
 }

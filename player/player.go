@@ -22,21 +22,28 @@ func clamp(x, min, max int) int {
 type AudioPlayer struct {
 	streamer beep.StreamSeekCloser
 	format   beep.Format
-	paused   bool
+	ctrl     *beep.Ctrl
 }
 
 func New(streamer beep.StreamSeekCloser, format beep.Format) *AudioPlayer {
 	return &AudioPlayer{
 		streamer: streamer,
 		format:   format,
-		paused:   false,
+		ctrl: &beep.Ctrl{Streamer: streamer, Paused: false},
 	}
+}
+
+func (p *AudioPlayer) Init() error {
+	return speaker.Init(
+		p.format.SampleRate,
+		p.format.SampleRate.N(time.Second/10),
+	)
 }
 
 func (p *AudioPlayer) Play(ctx context.Context, cancel context.CancelFunc) {
 	speaker.Play(
 		beep.Seq(
-			p.streamer,
+			p.ctrl,
 			beep.Callback(func() {
 				cancel()
 			}),
@@ -45,40 +52,25 @@ func (p *AudioPlayer) Play(ctx context.Context, cancel context.CancelFunc) {
 }
 
 func (p *AudioPlayer) TogglePause() bool {
-	p.paused = !p.paused
-
-	if p.paused {
-		speaker.Lock()
-	} else {
-		speaker.Unlock()
-	}
-
-	return p.paused
-}
-
-func (p *AudioPlayer) Close() {
-	p.streamer.Close()
-}
-
-func (p *AudioPlayer) Init() {
-	speaker.Init(
-		p.format.SampleRate,
-		p.format.SampleRate.N(time.Second/10),
-	)
+	speaker.Lock()
+	p.ctrl.Paused = !p.ctrl.Paused
+	speaker.Unlock()
+	
+	return p.ctrl.Paused
 }
 
 func (p *AudioPlayer) Restart() {
+	speaker.Lock()
 	p.streamer.Seek(0)
+	speaker.Unlock()
 }
 
 func (p *AudioPlayer) SkipInMillisecond(milliseconds int) {
-	if !p.paused {
-		speaker.Lock()
-		defer speaker.Unlock()
-	}
+	speaker.Lock()
+	defer speaker.Unlock()
 
-	nextPosition := p.streamer.Position() + p.format.SampleRate.N(
-		time.Duration(milliseconds)*time.Millisecond)
+	delta := p.format.SampleRate.N(time.Duration(milliseconds) * time.Millisecond)
+	nextPosition := p.streamer.Position() + delta
 
 	nextPosition = clamp(nextPosition, 0, p.streamer.Len())
 
@@ -86,9 +78,17 @@ func (p *AudioPlayer) SkipInMillisecond(milliseconds int) {
 }
 
 func (p *AudioPlayer) GetCurrentMillisecond() int {
-	return int(float64(p.streamer.Position()) * 1000 / float64(p.format.SampleRate))
+    speaker.Lock()
+    defer speaker.Unlock()
+
+    return int(p.format.SampleRate.D(p.streamer.Position()) / time.Millisecond)
 }
 
 func (p *AudioPlayer) GetLengthInMilliseconds() int {
-	return int(float64(p.streamer.Len()) * 1000 / float64(p.format.SampleRate))
+    return int(p.format.SampleRate.D(p.streamer.Len()) / time.Millisecond)
+}
+
+func (p *AudioPlayer) Close() {
+	speaker.Clear()
+	p.streamer.Close()
 }

@@ -4,7 +4,7 @@ import "context"
 
 type Ui interface {
 	Destroy()
-	Init()
+	Init() error
 	EventLoop(ctx context.Context, cancel context.CancelFunc)
 	Loop(ctx context.Context)
 }

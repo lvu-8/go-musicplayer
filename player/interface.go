@@ -9,6 +9,6 @@ type Player interface {
 	GetLengthInMilliseconds() int
 	TogglePause() bool
 	SkipInMillisecond(milliseconds int)
-	Init()
+	Init() error
 	Play(ctx context.Context, cancel context.CancelFunc)
 }
