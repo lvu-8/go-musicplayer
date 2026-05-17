@@ -46,7 +46,7 @@ It is a simple CLI audio player written in Go. It supports mp3 playback, pause/r
 
 ## Screenshot
 
-![screenshot](screenshot.png)
+![screenshot](assets/screenshot.png)
 
 ## License
 
