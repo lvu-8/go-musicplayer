@@ -2,9 +2,9 @@ package app
 
 import (
 	"context"
-	"player/player"
-	"player/ui"
-	"player/ui/cli"
+	"github.com/lvu-8/go-musicplayer/player"
+	"github.com/lvu-8/go-musicplayer/ui"
+	"github.com/lvu-8/go-musicplayer/ui/cli"
 
 	"github.com/faiface/beep"
 )

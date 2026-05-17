@@ -1,4 +1,4 @@
-module player
+module github.com/lvu-8/go-musicplayer
 
 go 1.24.0
 

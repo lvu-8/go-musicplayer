@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"player/app"
+	"github.com/lvu-8/go-musicplayer/app"
 
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"

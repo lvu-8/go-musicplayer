@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"player/player"
+	"github.com/lvu-8/go-musicplayer/player"
 	"strings"
 	"time"
 
