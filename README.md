@@ -11,8 +11,7 @@ It is a simple CLI audio player written in Go. It supports mp3 playback, pause/r
 
 ## Dependencies
 - [Go](https://golang.org/) >= 1.18
-- [faiface/beep](https://github.com/faiface/beep)
-- [faiface/beep/mp3](https://github.com/faiface/beep)
+- [gopxl/beep](https://github.com/gopxl/beep)
 - Linux (CLI version)
 
 ## Build
