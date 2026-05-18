@@ -6,7 +6,7 @@ import (
 	"github.com/lvu-8/go-musicplayer/ui"
 	"github.com/lvu-8/go-musicplayer/ui/cli"
 
-	"github.com/faiface/beep"
+	beep "github.com/gopxl/beep/v2"
 )
 
 type MusicApp struct {

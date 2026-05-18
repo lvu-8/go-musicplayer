@@ -5,8 +5,8 @@ import (
 
 	"context"
 
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/speaker"
+	beep "github.com/gopxl/beep/v2"
+	"github.com/gopxl/beep/v2/speaker"
 )
 
 func clamp(x, min, max int) int {

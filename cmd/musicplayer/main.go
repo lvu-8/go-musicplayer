@@ -5,9 +5,11 @@ import (
 	"os"
 	"github.com/lvu-8/go-musicplayer/app"
 
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/mp3"
+	beep "github.com/gopxl/beep/v2"
+	"github.com/gopxl/beep/v2/mp3"
 )
+
+
 
 func openAndDecode(path string) (beep.StreamSeekCloser, beep.Format, *os.File, error) {
 	f, err := os.Open(path)

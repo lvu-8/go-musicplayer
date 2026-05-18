@@ -3,7 +3,7 @@ package player
 import (
 	"testing"
 
-	"github.com/faiface/beep"
+	beep "github.com/gopxl/beep/v2"
 )
 
 type mockStreamer struct {
